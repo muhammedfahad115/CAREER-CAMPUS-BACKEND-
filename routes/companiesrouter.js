@@ -1,6 +1,6 @@
-const express = require('express')
-const { postcompaniessignup } = require('../controllers/companiescontrollers')
-const router = express.Router()
-router.post('/signup', postcompaniessignup)
-
-module.exports = router
+const express = require('express');
+const {postcompaniessignup} = require('../controllers/companiescontrollers');
+// eslint-disable-next-line new-cap
+const router = express.Router();
+router.post('/signup', postcompaniessignup);
+module.exports = router;
