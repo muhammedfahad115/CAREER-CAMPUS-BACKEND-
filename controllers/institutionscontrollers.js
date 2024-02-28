@@ -2,6 +2,7 @@ const Institutions = require('../models/institutionsSchema');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const StudentsProfile = require('../models/StudentsProfileSchema');
+const StudentProfile = require('../models/StudentsProfileSchema');
 const secretKey = process.env.JWT_SECRET;
 const institutionsObject = {
   postinstituionssignup: async (req, res)=>{
@@ -50,13 +51,22 @@ const institutionsObject = {
     }
   },
   getInstitutionsStudents: async (req, res)=>{
-    const getStudents = await StudentsProfile.find({});
-    if (getStudents) {
-      res.status(200).json({
-        message: 'Students data fetched successfully', getStudents});
-    } else {
-      res.status(404).json({error: 'Data  is not there '});
-    }
+    const {currentPage, limit} = req.query;
+    const skipCount = (currentPage - 1)*limit;
+    const findStudents = await
+    StudentProfile.find()
+        .skip(skipCount)
+        .limit(parseInt(limit, 10));
+    // console.log(findStudents);
+    res .status(200)
+        .json({message: 'Students data fetched successfully', findStudents});
+  },
+  getbalancestudents: async (req, res)=>{
+    // const {currentPage, limit} = req.query;
+    const findBalance = await StudentProfile.find({});
+    const findBalanceLength = findBalance.length;
+    res .status(200)
+        .json({message: 'Got the balance data to show', findBalanceLength});
   },
 };
 

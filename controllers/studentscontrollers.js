@@ -129,7 +129,7 @@ const studentsObject = {
           contactNumber, email);
       const image = req.file.location;
       console.log(image);
-      const existingProfile = await StudentProfile.findOne( 
+      const existingProfile = await StudentProfile.findOne(
           {contactNumber: contactNumber});
       if (existingProfile) {
         res.status(400).json({error:
