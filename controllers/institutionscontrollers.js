@@ -68,6 +68,48 @@ const institutionsObject = {
     res .status(200)
         .json({message: 'Got the balance data to show', findBalanceLength});
   },
+  getSearchResult: async (req, res)=>{
+    try {
+      const query = req.query.q.toLowerCase();
+      console.log(query);
+
+      const searchResults = await StudentProfile.aggregate([
+        {
+          $match: {
+            $expr: {
+              $or: [
+                {
+                  $regexMatch: {
+                    input: {$concat: ['$firstName', ' ', '$lastName']},
+                    regex: new RegExp(query, 'i'),
+                  },
+                },
+                {
+                  $regexMatch: {
+                    input: '$firstName',
+                    regex: new RegExp(query, 'i'),
+                  },
+                },
+                {
+                  $regexMatch: {
+                    input: '$lastName',
+                    regex: new RegExp(query, 'i'),
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ]);
+
+      console.log(searchResults);
+      res.status(200)
+          .json({message: 'Got the searched students', searchResults});
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({error: 'Internal Server Error'});
+    }
+  },
 };
 
 module.exports = institutionsObject;
