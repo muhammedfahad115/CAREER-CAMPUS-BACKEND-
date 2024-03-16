@@ -4,6 +4,10 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const getOtp = require('./utilities/twilio');
 const twilioVerify = require('./utilities/twilioverify');
+const institutions = require('../models/institutionsSchema');
+const InstitutionsProfie = require('../models/InstitutionsProfile');
+const emailController = require('../controllers/EmailControllers');
+const Message = require('../models/messageSchema');
 const secretKey = process.env.JWT_SECRET;
 
 const studentsObject = {
@@ -25,7 +29,9 @@ const studentsObject = {
         phoneNumber: phoneNumber,
         password: hashedPassword,
       });
+      const userName = firstName + ' ' + lastName;
       newStudent.save();
+      emailController.sendWelcomeEmail(userName, email);
       return res.json({message: 'Signup successfull'});
     }
   },
@@ -97,7 +103,6 @@ const studentsObject = {
       } else {
         res.status(200).json({message: 'Otp successfully verified'});
       }
-      console.log(Otp, verifyPhoneNumber);
     } catch (error) {
       console.log('An error occured', error);
     }
@@ -106,7 +111,6 @@ const studentsObject = {
     try {
       const {newpassword, verifyPhoneNumber} = req.body;
       const newHashedPassword = await bcrypt.hash(newpassword, 10);
-      console.log(newHashedPassword);
       const findStudentAndUpdate = await Students.findOneAndUpdate(
           {phoneNumber: verifyPhoneNumber},
           {$set: {password: newHashedPassword}},
@@ -125,10 +129,7 @@ const studentsObject = {
     try {
       const {firstName, lastName, dob, gender,
         description, contactNumber, email} = req.body;
-      console.log(firstName, lastName, dob, gender, description,
-          contactNumber, email);
       const image = req.file.location;
-      console.log(image);
       const existingProfile = await StudentProfile.findOne(
           {contactNumber: contactNumber});
       if (existingProfile) {
@@ -191,6 +192,90 @@ const studentsObject = {
       }
     } catch (error) {
       console.error('An error occured when updating profile details', error);
+    }
+  },
+  getInstitutions: async (req, res)=>{
+    const findStudent = await institutions.find({});
+    res.status(200)
+        .json({message: 'student is now displayed on chat list',
+          findStudent});
+  },
+  getStudentsInstitutions: async (req, res)=>{
+    const {currentPage, limit} = req.query;
+    const skipCount = (currentPage - 1)*limit;
+    const findInstitutions = await
+    InstitutionsProfie.find()
+        .skip(skipCount)
+        .limit(parseInt(limit, 10));
+    // console.log(findStudents);
+    res .status(200)
+        .json({message: 'Students data fetched successfully',
+          findInstitutions});
+  },
+  getBalanceInstitutions: async (req, res)=>{
+    // const {currentPage, limit} = req.query;
+    const findBalance = await InstitutionsProfie.find({});
+    const findBalanceLength = findBalance.length;
+    res .status(200)
+        .json({message: 'Got the balance data to show', findBalanceLength});
+  },
+  getInstitutionsMessage: async (req, res)=>{
+    const findInstitutions = await InstitutionsProfie.find({});
+    const recieverEmail = req.students.email;
+    console.log(findInstitutions);
+    res.status(200)
+        .json({message: 'Institutions is now displayed on chat list',
+          findInstitutions, recieverEmail});
+  },
+  postStudentsMessage: async (req, res)=>{
+    const postMessage = req.body;
+    const {message, senderEmail, recieverEmail} = postMessage;
+    console.log(message, senderEmail, recieverEmail);
+    try {
+      if (message && senderEmail && recieverEmail) {
+        const saveMessageObject = new Message({
+          message: message,
+          senderEmail: senderEmail,
+          recieverEmail: recieverEmail,
+        });
+        await saveMessageObject.save();
+        res.status(200).json({message: 'RecievedMessage saved successfully'});
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  getmessagestudents: async (req, res)=>{
+    const recieverEmail = req.query.senderEmail;
+    const senderEmail = req.students.email;
+    console.log('query from the students', senderEmail);
+    try {
+      const findMessage = await Message
+          .find({senderEmail: recieverEmail, recieverEmail: senderEmail});
+      if (findMessage) {
+        res.status(200)
+            .json({message: 'Message fetched successfully', findMessage});
+        console.log(findMessage);
+      } else {
+        res.status(400).json({error: 'Cannot find messages'});
+      }
+    } catch (error) {
+      console.log('Error during finding the messages', error);
+    }
+  },
+  postStudentSentedMessage: async (req, res) =>{
+    const {message, senderEmail} = req.body;
+    const recieverEmail = req.students.email;
+    console.log('sented message :', message);
+    console.log('sented senderEmail:', senderEmail);
+    if (message && senderEmail && recieverEmail) {
+      const saveSentedMessage = new Message({
+        message: message,
+        senderEmail: senderEmail,
+        recieverEmail: recieverEmail,
+      });
+      await saveSentedMessage.save;
+      res.status(200).json({message: 'sented message'});
     }
   },
 };

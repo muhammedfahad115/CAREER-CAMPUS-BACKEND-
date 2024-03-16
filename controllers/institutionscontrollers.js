@@ -1,9 +1,12 @@
 const Institutions = require('../models/institutionsSchema');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const StudentsProfile = require('../models/StudentsProfileSchema');
 const StudentProfile = require('../models/StudentsProfileSchema');
 const secretKey = process.env.JWT_SECRET;
+const InstitutionsProfile = require('../models/InstitutionsProfile');
+const emailController = require('../controllers/EmailControllers');
+const Message = require('../models/messageSchema');
+const message = require('../models/messageSchema');
 const institutionsObject = {
   postinstituionssignup: async (req, res)=>{
     const {firstName, lastName, email, password} = req.body;
@@ -21,6 +24,8 @@ const institutionsObject = {
         password: hashedPassword,
       });
       newInstitutions.save();
+      const mergedName = firstName + ' ' + lastName;
+      emailController.sendWelcomeEmail(mergedName, email);
       return res.json({message: 'Signup successfull'});
     }
   },
@@ -109,6 +114,101 @@ const institutionsObject = {
       console.error(error);
       res.status(500).json({error: 'Internal Server Error'});
     }
+  },
+  postAddProfile: async (req, res) =>{
+    try {
+      const {firstName, lastName, dob, institution,
+        description, contactNumber, email} = req.body;
+      console.log(firstName, lastName, dob, institution, description,
+          contactNumber, email);
+      const image = req.file.location;
+      console.log(image);
+      const existingProfile = await InstitutionsProfile.findOne(
+          {contactNumber: contactNumber});
+      if (existingProfile) {
+        res.status(400).json({error:
+          'You have already added your Profile details'});
+      } else {
+        const newProfile = new InstitutionsProfile({
+          firstName: firstName,
+          lastName: lastName,
+          dob: dob,
+          institution: institution,
+          description: description,
+          contactNumber: contactNumber,
+          email: email,
+          image: image,
+        });
+        await newProfile.save();
+        res.status(200).json({message: 'Profile added successfully'});
+      }
+    } catch (error) {
+      console.log('error occured when saving the profile details', error);
+    }
+  },
+  getStudentMessage: async (req, res)=>{
+    const findStudent = await StudentProfile.find({});
+    const recieverEmail = req.students.email;
+    res.status(200)
+        .json({message: 'student is now displayed on chat list',
+          findStudent, recieverEmail});
+  },
+  postInstitutionsMessage: async (req, res)=>{
+    const postMessage = req.body;
+    const {message, senderEmail, recieverEmail} = postMessage;
+    console.log(message, senderEmail, recieverEmail);
+    // console.log('console from the institutions', req.body);
+    try {
+      if (message && senderEmail && recieverEmail) {
+        const saveMessageObject = new Message({
+          message: message,
+          senderEmail: senderEmail,
+          recieverEmail: recieverEmail,
+        });
+        await saveMessageObject.save();
+        res.status(200).json({message: 'RecievedMessage saved'});
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  getmessageinstitutions: async (req, res)=>{
+    const recieverEmail = req.query.senderEmail;
+    const senderEmail = req.students.email;
+    console.log(senderEmail, recieverEmail);
+    try {
+      const findMessage = await Message
+          .find({senderEmail: recieverEmail, recieverEmail: senderEmail});
+      const findSenderMessage = await Message
+          .find({senderEmail: senderEmail, recieverEmail: recieverEmail});
+      console.log(findSenderMessage);
+      if (findMessage) {
+        res.status(200)
+            .json({message: 'Message fetched succesfully', findMessage});
+      } else {
+        res.status(400).json({error: 'Cannot find messages'});
+      }
+      console.log('insitutions findedMessage', findMessage);
+    } catch (error) {
+      console.log('Error during finding the messages', error);
+    }
+  },
+  postSentedMessage: async (req, res) =>{
+    const {message, senderEmail} = req.body;
+    const recieverEmail = req.students.email;
+    console.log('sented message from the institutions:',
+        message, senderEmail, recieverEmail);
+    if (message && senderEmail && recieverEmail) {
+      const saveSentedMessage = new Message({
+        message: message,
+        senderEmail: senderEmail,
+        recieverEmail: recieverEmail,
+      });
+      await saveSentedMessage.save();
+      res.status(200).json({message: 'Sented Message Successfully '});
+      console.log('message saved successfully', saveSentedMessage);
+    }
+    console.log();
   },
 };
 
