@@ -251,7 +251,9 @@ const studentsObject = {
     console.log('query from the students', senderEmail);
     try {
       const findMessage = await Message
-          .find({senderEmail: recieverEmail, recieverEmail: senderEmail});
+          .find({$or:
+         [{senderEmail: recieverEmail, recieverEmail: senderEmail},
+           {senderEmail: senderEmail, recieverEmail: recieverEmail}]});
       if (findMessage) {
         res.status(200)
             .json({message: 'Message fetched successfully', findMessage});
@@ -274,8 +276,9 @@ const studentsObject = {
         senderEmail: senderEmail,
         recieverEmail: recieverEmail,
       });
-      await saveSentedMessage.save;
+      await saveSentedMessage.save();
       res.status(200).json({message: 'sented message'});
+      console.log('Posted message saved successfully');
     }
   },
 };

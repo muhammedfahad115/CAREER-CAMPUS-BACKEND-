@@ -178,10 +178,12 @@ const institutionsObject = {
     console.log(senderEmail, recieverEmail);
     try {
       const findMessage = await Message
-          .find({senderEmail: recieverEmail, recieverEmail: senderEmail});
-      const findSenderMessage = await Message
-          .find({senderEmail: senderEmail, recieverEmail: recieverEmail});
-      console.log(findSenderMessage);
+          .find({$or:
+             [{senderEmail: recieverEmail, recieverEmail: senderEmail},
+               {senderEmail: senderEmail, recieverEmail: recieverEmail}]});
+      // const findSenderMessage = await Message
+      //     .find({senderEmail: senderEmail, recieverEmail: recieverEmail});
+      // console.log(findSenderMessage);
       if (findMessage) {
         res.status(200)
             .json({message: 'Message fetched succesfully', findMessage});
