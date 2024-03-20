@@ -7,6 +7,7 @@ const InstitutionsProfile = require('../models/InstitutionsProfile');
 const emailController = require('../controllers/EmailControllers');
 const Message = require('../models/messageSchema');
 const message = require('../models/messageSchema');
+const institutions = require('../models/institutionsSchema');
 const institutionsObject = {
   postinstituionssignup: async (req, res)=>{
     const {firstName, lastName, email, password} = req.body;
@@ -211,6 +212,11 @@ const institutionsObject = {
       console.log('message saved successfully', saveSentedMessage);
     }
     console.log();
+  },
+  postAddedImage: async (req, res) =>{
+    const image = req.file;
+    const addedInstitutions = req.body.location;
+    console.log(image, addedInstitutions);
   },
 };
 

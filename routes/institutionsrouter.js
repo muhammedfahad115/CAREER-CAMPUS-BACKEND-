@@ -8,7 +8,9 @@ const {postinstituionssignup,
   postAddProfile,
   postInstitutionsMessage,
   getmessageinstitutions,
-  postSentedMessage} = require('../controllers/institutionscontrollers');
+  postSentedMessage,
+  postAddedImage} = require('../controllers/institutionscontrollers');
+const {postPaymentObject} = require('../controllers/institutionsPayment');
 const router = express.Router();
 const {upload} = require('../multer/studentMulter');
 const verifyToken = require('../middleware/verifyToken');
@@ -22,6 +24,8 @@ router.post('/addprofile', upload.single('image'), postAddProfile);
 router.post('/postmessage', verifyToken, postInstitutionsMessage);
 router.get('/getmessage', verifyToken, getmessageinstitutions);
 router.post('/postsentedmessage', verifyToken, postSentedMessage);
+router.post('/payment', postPaymentObject);
+router.post('/addedimage', upload.single('image'), postAddedImage);
 
 
 module.exports = router;
