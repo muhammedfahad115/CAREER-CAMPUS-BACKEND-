@@ -10,7 +10,10 @@ const {postStudentsignup, postStudentlogin, postOtp,
   getInstitutionsMessage,
   postStudentsMessage,
   getmessagestudents,
-  postStudentSentedMessage} = require('../controllers/studentscontrollers');
+  postStudentSentedMessage,
+  postRating,
+  postLike,
+  postComment} = require('../controllers/studentscontrollers');
 // eslint-disable-next-line new-cap
 const router = express.Router();
 const {upload} = require('../multer/studentMulter');
@@ -30,6 +33,9 @@ router.get('/getinstitutions', verifyToken, getInstitutions);
 router.post('/postmessage', verifyToken, postStudentsMessage);
 router.get('/getmessage', verifyToken, getmessagestudents);
 router.post('/postsentedmessage', verifyToken, postStudentSentedMessage);
+router.post('/rating', verifyToken, postRating);
+router.post('/comments',verifyToken, postComment);
+// router.get('/getrating', getRating);
 // router.post('/get-user-profile', verifyToken , getProfile)
 
 module.exports = router;

@@ -8,6 +8,8 @@ const institutions = require('../models/institutionsSchema');
 const InstitutionsProfie = require('../models/InstitutionsProfile');
 const emailController = require('../controllers/EmailControllers');
 const Message = require('../models/messageSchema');
+const Rating = require('../models/RatingSchema');
+const StudentComment = require('../models/StudentCommentSchema');
 const secretKey = process.env.JWT_SECRET;
 
 const studentsObject = {
@@ -203,10 +205,19 @@ const studentsObject = {
   getStudentsInstitutions: async (req, res)=>{
     const {currentPage, limit} = req.query;
     const skipCount = (currentPage - 1)*limit;
-    const findInstitutions = await
-    InstitutionsProfie.find()
-        .skip(skipCount)
-        .limit(parseInt(limit, 10));
+    const findInstitutions = await InstitutionsProfie.aggregate([
+      {$skip: skipCount},
+      {$limit: parseInt(limit, 10)},
+      {
+        $lookup: {
+          from: 'ratingcollections',
+          localField: 'email',
+          foreignField: 'institutionEmail',
+          as: 'joinedData',
+        },
+      },
+    ]);
+    console.log(findInstitutions);
     // console.log(findStudents);
     res .status(200)
         .json({message: 'Students data fetched successfully',
@@ -279,6 +290,50 @@ const studentsObject = {
       await saveSentedMessage.save();
       res.status(200).json({message: 'sented message'});
       console.log('Posted message saved successfully');
+    }
+  },
+  postRating: async (req, res) => {
+    try {
+      const {rating, institutionsEmail} = req.body;
+      const userEmail = req.students.email;
+      console.log('Rating:', rating, 'Institutions Email:', institutionsEmail);
+
+      const checkAndUpdateRating = await Rating.findOneAndUpdate(
+          {institutionEmail: institutionsEmail},
+          {$set: {rating: rating,
+            institutionEmail: institutionsEmail,
+            userEmail: userEmail,
+          }},
+          {new: true},
+      );
+
+      if (!checkAndUpdateRating) {
+        const newRating = new Rating({
+          rating: rating,
+          institutionEmail: institutionsEmail,
+          userEmail: userEmail,
+        });
+        await newRating.save();
+      }
+
+      res.status(200).json({message: 'Rating updated successfully'});
+    } catch (error) {
+      console.error('Error updating/saving rating:', error);
+      res.status(500).json({error: 'Internal server error', error});
+    }
+  },
+  postComment: async (req, res) => {
+    const {comments, options} = req.body;
+    console.log(comments);
+    try {
+      const saveComment = new StudentComment({
+        comments: comments,
+      });
+      await saveComment.save();
+      res.status(200).json({message: 'Comment added successfully'});
+      console.log(saveComment);
+    } catch (error) {
+      res.status(500).json({error: 'Internal server error', error});
     }
   },
 };
